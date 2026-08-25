@@ -1,0 +1,20 @@
+/* css/responsive.css */
+@media (max-width: 1200px) {
+  .layout-grid { grid-template-columns: 160px 1fr; gap: 14px; }
+  .right-panel { display: none; }
+}
+@media (max-width: 768px) {
+  .layout-grid { grid-template-columns: 1fr; padding: 12px; gap: 12px; }
+  .left-nav { order: 2; position: fixed; bottom: 0; left: 0; right: 0; z-index: 40; background: var(--bg-secondary); border-top: 1px solid var(--border); padding: 6px 8px; display: flex; overflow-x: auto; gap: 2px; }
+  .left-nav nav { flex-direction: row; gap: 4px; }
+  .nav-item { white-space: nowrap; font-size: 10px; padding: 8px 10px; }
+  .center-panel { order: 1; padding-bottom: 80px; }
+  .top-nav { height: 56px; padding: 0 16px; }
+  .status-area .system-status { display: none; }
+  .footer { flex-direction: column; text-align: center; }
+}
+@media (max-width: 480px) {
+  .layout-grid { padding: 8px; }
+  .left-nav { padding: 4px; }
+  .nav-item { padding: 8px 8px; font-size: 9px; }
+}
