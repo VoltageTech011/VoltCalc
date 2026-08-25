@@ -1,0 +1,6 @@
+/* css/converter.css */
+.converter-panel, .currency-panel { display: flex; flex-direction: column; gap: 16px; margin-bottom: 16px; }
+.section-title { font-size: 14px; letter-spacing: 2px; color: var(--accent); }
+.converter-category select, .converter-units select, .currency-fields select, .currency-fields input, .converter-input input { background: var(--panel-solid); border: 1px solid var(--border); color: var(--text); padding: 10px; border-radius: 6px; width: 100%; }
+.converter-result, .currency-result { font-size: 24px; font-weight: 600; padding: 10px; background: var(--panel-solid); border-radius: 6px; text-align: center; }
+.currency-status { color: var(--error); font-size: 12px; letter-spacing: 1px; }
