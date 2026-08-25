@@ -9,10 +9,18 @@ import { importHistory } from './history/import.js';
 import { getUnitsForCategory, convertUnit } from './converter/units.js';
 import { conversionCategories } from './converter/conversion.js';
 import { renderGraph, resetGraphView, zoomIn, zoomOut } from './graph/renderer.js';
+import { evaluateFunction, validateFunction } from './graph/functions.js';
+import { getViewState, setViewState, resetView, zoomIn as controlZoomIn, zoomOut as controlZoomOut, panLeft, panRight, panUp, panDown } from './graph/controls.js';
 import { formulaLibrary } from './formulas/mathematics.js';
+import { physicsFormulas } from './formulas/physics.js';
+import { geometryFormulas } from './formulas/geometry.js';
+import { storage } from './storage/storage.js';
 import { loadTheme, toggleTheme } from './ui/theme.js';
 import { showToast } from './ui/toast.js';
+import { showModal } from './ui/modal.js';
+import { announceMessage, setupKeyboardNavigation, setReducedMotion } from './ui/accessibility.js';
 import { navigateTo } from './ui/navigation.js';
+import { fetchCurrencyRates, convertCurrency } from './api/currency.js';
 
 // Application state
 let currentExpression = '';
@@ -20,6 +28,8 @@ let currentResult = '0';
 let currentMode = 'standard';
 let activeSection = 'calculator';
 let scientificMode = false;
+let angleMode = 'deg';
+let graphViewState = getViewState();
 
 // DOM refs
 const expressionDisplay = document.getElementById('expressionDisplay');
@@ -42,6 +52,7 @@ const currencyAmount = document.getElementById('currencyAmount');
 const currencyFrom = document.getElementById('currencyFrom');
 const currencyTo = document.getElementById('currencyTo');
 const currencyResult = document.getElementById('currencyResult');
+const currencyStatus = document.getElementById('currencyStatus');
 const graphFunctionInput = document.getElementById('graphFunction');
 const plotGraphBtn = document.getElementById('plotGraphBtn');
 const resetGraphBtn = document.getElementById('resetGraphBtn');
@@ -67,8 +78,12 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function initializeApp() {
-  // Load theme
-  const theme = loadTheme();
+  // Setup accessibility
+  setupKeyboardNavigation();
+  setReducedMotion();
+  
+  // Load theme from storage manager
+  const theme = storage.get('theme', 'dark');
   applyTheme(theme);
   rightThemeValue.textContent = theme.toUpperCase();
   devThemeStatus.textContent = theme.toUpperCase();
@@ -85,6 +100,7 @@ function initializeApp() {
       const section = btn.dataset.section;
       navigateTo(section);
       activeSection = section;
+      announceMessage(`Navigated to ${section}`);
     });
   });
 
@@ -103,9 +119,10 @@ function initializeApp() {
   themeToggleBtn.addEventListener('click', () => {
     const newTheme = document.body.classList.contains('light') ? 'dark' : 'light';
     applyTheme(newTheme);
+    storage.set('theme', newTheme);
     rightThemeValue.textContent = newTheme.toUpperCase();
     devThemeStatus.textContent = newTheme.toUpperCase();
-    localStorage.setItem('voltcalc-theme', newTheme);
+    announceMessage(`Theme changed to ${newTheme}`);
   });
 
   // Copy result
@@ -113,21 +130,41 @@ function initializeApp() {
     if (currentResult !== 'Error' && currentResult !== '—') {
       navigator.clipboard.writeText(currentResult).then(() => {
         showToast('COPIED');
+        announceMessage('Result copied to clipboard');
       }).catch(() => showToast('CLIPBOARD UNAVAILABLE'));
     }
   });
 
   // Memory buttons
-  document.getElementById('memoryClear').addEventListener('click', () => { memory.clear(); updateMemoryUI(); });
-  document.getElementById('memoryRecall').addEventListener('click', () => { currentExpression = memory.get().toString(); currentResult = memory.get().toString(); updateDisplay(); });
-  document.getElementById('memoryAdd').addEventListener('click', () => { memory.add(currentResult); updateMemoryUI(); });
-  document.getElementById('memorySubtract').addEventListener('click', () => { memory.subtract(currentResult); updateMemoryUI(); });
+  document.getElementById('memoryClear').addEventListener('click', () => { 
+    memory.clear(); 
+    updateMemoryUI(); 
+    announceMessage('Memory cleared');
+  });
+  document.getElementById('memoryRecall').addEventListener('click', () => { 
+    currentExpression = memory.get().toString(); 
+    currentResult = memory.get().toString(); 
+    updateDisplay(); 
+  });
+  document.getElementById('memoryAdd').addEventListener('click', () => { 
+    memory.add(currentResult); 
+    updateMemoryUI(); 
+    announceMessage('Added to memory');
+  });
+  document.getElementById('memorySubtract').addEventListener('click', () => { 
+    memory.subtract(currentResult); 
+    updateMemoryUI(); 
+    announceMessage('Subtracted from memory');
+  });
 
   // Keyboard support
   document.addEventListener('keydown', handleKeyboard);
 
   // Converter setup
   setupConverter();
+
+  // Currency setup
+  setupCurrency();
 
   // Graph setup
   setupGraph();
@@ -165,6 +202,7 @@ function updateMemoryUI() {
   const val = memory.get();
   memoryValueSpan.textContent = val;
   rightMemoryValue.textContent = val;
+  storage.set('memory', val);
 }
 
 function updateDisplay() {
@@ -255,11 +293,37 @@ function handleStandardKey(key) {
 
 function handleScientificKey(key) {
   if (key === 'DEG' || key === 'RAD') {
-    currentMode = key === 'DEG' ? 'deg' : 'rad';
+    angleMode = key === 'DEG' ? 'deg' : 'rad';
     showToast('ANGLE MODE: ' + key);
+    announceMessage(`Angle mode set to ${key}`);
     return;
   }
-  currentExpression += key + '(';
+  
+  switch(key) {
+    case 'x²':
+      currentExpression += '^2';
+      break;
+    case 'xʸ':
+      currentExpression += '^';
+      break;
+    case 'π':
+      currentExpression += 'π';
+      break;
+    case 'e':
+      currentExpression += 'e';
+      break;
+    case '1/x':
+      currentExpression = `1/(${currentExpression})`;
+      break;
+    case '10ˣ':
+      currentExpression = `10^(${currentExpression})`;
+      break;
+    case 'n!':
+      currentExpression += '!';
+      break;
+    default:
+      currentExpression += key + '(';
+  }
   updateDisplay();
 }
 
@@ -268,8 +332,9 @@ function calculateResult() {
     const formatted = currentExpression.replace(/×/g, '*').replace(/÷/g, '/').replace(/−/g, '-').replace(/%/g, '/100');
     const tokens = tokenizer(formatted);
     const result = parseExpression(tokens);
+    
     if (scientificMode) {
-      const scientificResult = scientificEvaluate(currentExpression);
+      const scientificResult = scientificEvaluate(currentExpression, angleMode);
       if (scientificResult !== null) {
         currentResult = formatResult(scientificResult);
       } else {
@@ -278,11 +343,14 @@ function calculateResult() {
     } else {
       currentResult = formatResult(result);
     }
+    
     if (currentResult === 'Infinity' || currentResult === 'NaN' || currentResult.includes('NaN')) {
       currentResult = 'Error';
+      announceMessage('Calculation error');
     }
   } catch (e) {
     currentResult = 'Error';
+    announceMessage('Invalid expression');
   }
   updateDisplay();
 }
@@ -296,6 +364,8 @@ function storeHistoryIfValid() {
 
 function handleKeyboard(e) {
   const key = e.key;
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  
   if (key >= '0' && key <= '9') { currentExpression += key; e.preventDefault(); }
   else if (key === '+') { currentExpression += '+'; e.preventDefault(); }
   else if (key === '-') { currentExpression += '−'; e.preventDefault(); }
@@ -324,11 +394,6 @@ function setupConverter() {
   valueInput.addEventListener('input', performConversion);
   fromUnitSelect.addEventListener('change', performConversion);
   toUnitSelect.addEventListener('change', performConversion);
-
-  // Currency placeholder
-  currencyAmount.addEventListener('input', () => currencyResult.textContent = 'LIVE RATES UNAVAILABLE');
-  currencyFrom.addEventListener('change', () => currencyResult.textContent = 'LIVE RATES UNAVAILABLE');
-  currencyTo.addEventListener('change', () => currencyResult.textContent = 'LIVE RATES UNAVAILABLE');
 }
 
 function populateUnits(category) {
@@ -354,42 +419,124 @@ function performConversion() {
   }
 }
 
+// Currency setup
+async function setupCurrency() {
+  try {
+    const rates = await fetchCurrencyRates('USD');
+    if (rates) {
+      currencyStatus.textContent = 'LIVE RATES AVAILABLE';
+      currencyStatus.style.color = 'var(--accent)';
+      
+      const updateCurrency = async () => {
+        const amount = parseFloat(currencyAmount.value);
+        const from = currencyFrom.value;
+        const to = currencyTo.value;
+        if (!isNaN(amount)) {
+          const result = await convertCurrency(amount, from, to);
+          currencyResult.textContent = result ? result.toFixed(4) : 'ERROR';
+        }
+      };
+      
+      currencyAmount.addEventListener('input', updateCurrency);
+      currencyFrom.addEventListener('change', updateCurrency);
+      currencyTo.addEventListener('change', updateCurrency);
+      updateCurrency();
+    }
+  } catch (e) {
+    currencyStatus.textContent = 'LIVE RATES UNAVAILABLE';
+  }
+}
+
 // Graph setup
 let graphZoomLevel = 1.0;
 function setupGraph() {
   plotGraphBtn.addEventListener('click', () => {
     const fn = graphFunctionInput.value;
     try {
-      renderGraph(fn);
-      graphMessage.textContent = '';
+      if (validateFunction(fn)) {
+        renderGraph(fn);
+        graphMessage.textContent = '';
+      } else {
+        graphMessage.textContent = 'UNABLE TO PLOT FUNCTION';
+      }
     } catch (e) {
       graphMessage.textContent = 'UNABLE TO PLOT FUNCTION';
     }
   });
+  
   resetGraphBtn.addEventListener('click', () => {
     graphFunctionInput.value = 'x^2';
     resetGraphView();
+    resetView();
     renderGraph('x^2');
     graphZoomLevel = 1.0;
     zoomLevelLabel.textContent = '1.0x';
   });
-  zoomInBtn.addEventListener('click', () => { graphZoomLevel *= 1.2; zoomLevelLabel.textContent = graphZoomLevel.toFixed(1)+'x'; zoomIn(); });
-  zoomOutBtn.addEventListener('click', () => { graphZoomLevel /= 1.2; zoomLevelLabel.textContent = graphZoomLevel.toFixed(1)+'x'; zoomOut(); });
+  
+  zoomInBtn.addEventListener('click', () => { 
+    graphZoomLevel *= 1.2; 
+    zoomLevelLabel.textContent = graphZoomLevel.toFixed(1)+'x'; 
+    zoomIn();
+    controlZoomIn();
+    renderGraph(graphFunctionInput.value);
+  });
+  
+  zoomOutBtn.addEventListener('click', () => { 
+    graphZoomLevel /= 1.2; 
+    zoomLevelLabel.textContent = graphZoomLevel.toFixed(1)+'x'; 
+    zoomOut();
+    controlZoomOut();
+    renderGraph(graphFunctionInput.value);
+  });
+  
   renderGraph('x^2');
 }
 
 // Formula rendering
 function renderFormulas() {
   formulaList.innerHTML = '';
-  formulaLibrary.forEach(f => {
-    const card = document.createElement('div');
-    card.className = 'formula-card';
-    card.style.border = '1px solid var(--border)';
-    card.style.borderRadius = '6px';
-    card.style.padding = '12px';
-    card.style.marginBottom = '8px';
-    card.innerHTML = `<strong>${f.name}</strong><br><code>${f.formula}</code><br><span style="color: var(--text-muted)">${f.explanation}</span>`;
-    formulaList.appendChild(card);
+  
+  const allFormulas = [
+    { category: 'MATHEMATICS', formulas: formulaLibrary },
+    { category: 'PHYSICS', formulas: physicsFormulas },
+    { category: 'GEOMETRY', formulas: geometryFormulas }
+  ];
+  
+  allFormulas.forEach(({ category, formulas }) => {
+    const categoryHeader = document.createElement('h3');
+    categoryHeader.textContent = category;
+    categoryHeader.style.color = 'var(--accent)';
+    categoryHeader.style.marginTop = '20px';
+    categoryHeader.style.marginBottom = '10px';
+    categoryHeader.style.letterSpacing = '2px';
+    formulaList.appendChild(categoryHeader);
+    
+    formulas.forEach(f => {
+      const card = document.createElement('div');
+      card.className = 'formula-card';
+      card.style.border = '1px solid var(--border)';
+      card.style.borderRadius = '6px';
+      card.style.padding = '12px';
+      card.style.marginBottom = '8px';
+      
+      const name = document.createElement('strong');
+      name.textContent = f.name;
+      
+      const formula = document.createElement('code');
+      formula.textContent = f.formula;
+      formula.style.display = 'block';
+      formula.style.margin = '8px 0';
+      
+      const explanation = document.createElement('span');
+      explanation.textContent = f.explanation;
+      explanation.style.color = 'var(--text-muted)';
+      explanation.style.fontSize = '12px';
+      
+      card.appendChild(name);
+      card.appendChild(formula);
+      card.appendChild(explanation);
+      formulaList.appendChild(card);
+    });
   });
 }
 
@@ -404,26 +551,42 @@ function updateHistoryUI() {
   items.slice().reverse().forEach(item => {
     const div = document.createElement('div');
     div.className = 'history-item';
-    div.innerHTML = `
-      <div>
-        <div class="history-expr">${item.expression}</div>
-        <div class="history-result">${item.result}</div>
-        <div class="history-time">${new Date(item.timestamp).toLocaleString()}</div>
-      </div>
-      <div class="history-actions">
-        <button class="history-delete" data-id="${item.id}" aria-label="Delete entry">✕</button>
-      </div>`;
-    div.querySelector('.history-delete').addEventListener('click', () => {
+    
+    const infoDiv = document.createElement('div');
+    infoDiv.innerHTML = `
+      <div class="history-expr">${item.expression}</div>
+      <div class="history-result">${item.result}</div>
+      <div class="history-time">${new Date(item.timestamp).toLocaleString()}</div>
+    `;
+    
+    const actionsDiv = document.createElement('div');
+    actionsDiv.className = 'history-actions';
+    
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'history-delete';
+    deleteBtn.setAttribute('data-id', item.id);
+    deleteBtn.setAttribute('aria-label', 'Delete entry');
+    deleteBtn.textContent = '✕';
+    deleteBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
       historyManager.remove(item.id);
       updateHistoryUI();
+      showToast('ENTRY DELETED');
     });
+    
+    actionsDiv.appendChild(deleteBtn);
+    div.appendChild(infoDiv);
+    div.appendChild(actionsDiv);
+    
     div.addEventListener('click', (e) => {
       if (e.target.tagName !== 'BUTTON') {
         currentExpression = item.expression;
         currentResult = item.result;
         updateDisplay();
+        announceMessage('History entry loaded');
       }
     });
+    
     historyList.appendChild(div);
   });
 }
@@ -433,14 +596,29 @@ function setupHistoryActions() {
     const query = historySearchInput.value;
     const results = historySearch(historyManager.getAll(), query);
     historyList.innerHTML = '';
+    if (results.length === 0) {
+      historyList.innerHTML = '<div class="empty-state">NO MATCHES FOUND</div>';
+      return;
+    }
     results.slice().reverse().forEach(item => {
       const div = document.createElement('div');
       div.className = 'history-item';
-      div.innerHTML = `<div><div class="history-expr">${item.expression}</div><div class="history-result">${item.result}</div><div class="history-time">${new Date(item.timestamp).toLocaleString()}</div></div>`;
+      div.innerHTML = `
+        <div>
+          <div class="history-expr">${item.expression}</div>
+          <div class="history-result">${item.result}</div>
+          <div class="history-time">${new Date(item.timestamp).toLocaleString()}</div>
+        </div>
+      `;
       historyList.appendChild(div);
     });
   });
-  exportHistoryBtn.addEventListener('click', () => exportHistory(historyManager.getAll()));
+  
+  exportHistoryBtn.addEventListener('click', () => {
+    exportHistory(historyManager.getAll());
+    showToast('HISTORY EXPORTED');
+  });
+  
   importHistoryInput.addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -448,29 +626,37 @@ function setupHistoryActions() {
         historyManager.importItems(items);
         updateHistoryUI();
         showToast('HISTORY IMPORTED');
-      }).catch(() => showToast('INVALID FILE'));
+        announceMessage('History imported successfully');
+      }).catch(() => {
+        showToast('INVALID FILE');
+        announceMessage('Invalid history file');
+      });
     }
   });
+  
   clearHistoryBtn.addEventListener('click', () => {
-    historyManager.clear();
-    updateHistoryUI();
-    showToast('HISTORY CLEARED');
+    showModal({
+      title: 'CLEAR HISTORY',
+      content: 'Are you sure you want to clear all calculation history?',
+      onConfirm: () => {
+        historyManager.clear();
+        updateHistoryUI();
+        showToast('HISTORY CLEARED');
+        announceMessage('History cleared');
+      }
+    });
   });
 }
 
 function calculateStorageUsage() {
-  let total = 0;
-  for (let key in localStorage) {
-    if (localStorage.hasOwnProperty(key)) {
-      total += localStorage[key].length * 2;
-    }
-  }
-  return (total / 1024).toFixed(1) + ' KB';
+  return (storage.getStorageSize() / 1024).toFixed(1) + ' KB';
 }
 
 // Service worker registration
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js').catch(() => {});
+    navigator.serviceWorker.register('sw.js').catch(() => {
+      console.warn('Service worker registration failed');
+    });
   });
-             }
+           }
