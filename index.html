@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#08090C" id="themeColorMeta">
+  <title>VOLT//CALC — Utility Systems</title>
+  <link rel="icon" href="assets/icons/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/themes.css">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/responsive.css">
+  <link rel="stylesheet" href="css/calculator.css">
+  <link rel="stylesheet" href="css/history.css">
+  <link rel="stylesheet" href="css/converter.css">
+  <link rel="stylesheet" href="css/graph.css">
+  <link rel="stylesheet" href="css/modals.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="top-nav">
+      <div class="brand-area">
+        <span class="brand-icon" aria-hidden="true">⚡</span>
+        <div class="brand-text">
+          <span class="brand-name">VOLT//CALC</span>
+          <span class="brand-sub">UTILITY SYSTEMS</span>
+        </div>
+      </div>
+      <div class="status-area">
+        <span class="system-status"><span class="status-dot"></span> SYSTEM ONLINE</span>
+        <span class="version-tag">v1.0.0</span>
+      </div>
+    </header>
+
+    <div class="layout-grid">
+      <aside class="left-nav panel" aria-label="Main navigation">
+        <nav>
+          <button class="nav-item active" data-section="calculator" aria-label="Calculator section"><span class="nav-dot"></span>Calculator</button>
+          <button class="nav-item" data-section="converter" aria-label="Converter section">Converter</button>
+          <button class="nav-item" data-section="graph" aria-label="Graph section">Graph</button>
+          <button class="nav-item" data-section="formulas" aria-label="Formulas section">Formulas</button>
+          <button class="nav-item" data-section="history" aria-label="History section">History</button>
+          <button class="nav-item" data-section="why" aria-label="Why I built it section">Why I Built It</button>
+          <button class="nav-item" data-section="devmode" aria-label="Dev mode section">Dev Mode</button>
+        </nav>
+      </aside>
+
+      <main class="center-panel" id="mainPanel">
+        <!-- Calculator Section (active by default) -->
+        <section id="calculatorSection" class="app-section active-section">
+          <div class="display-panel panel">
+            <div class="display-topline">
+              <span class="calc-mode-indicator" id="calcModeIndicator">STANDARD</span>
+              <button class="copy-btn" id="copyResultBtn" aria-label="Copy result to clipboard">COPY</button>
+            </div>
+            <div class="expression-display" id="expressionDisplay" aria-live="polite">0</div>
+            <div class="result-display" id="resultDisplay" aria-live="polite">0</div>
+          </div>
+
+          <div class="mode-selector panel">
+            <button class="mode-btn active" data-calc-mode="standard" aria-label="Standard mode">STANDARD</button>
+            <button class="mode-btn" data-calc-mode="scientific" aria-label="Scientific mode">SCIENTIFIC</button>
+          </div>
+
+          <div class="memory-panel panel" id="memoryPanel" aria-label="Memory controls">
+            <span class="memory-title">MEMORY</span>
+            <span class="memory-value" id="memoryValue">0</span>
+            <div class="memory-buttons">
+              <button class="memory-btn" id="memoryClear" aria-label="Memory clear">MC</button>
+              <button class="memory-btn" id="memoryRecall" aria-label="Memory recall">MR</button>
+              <button class="memory-btn" id="memoryAdd" aria-label="Memory add">M+</button>
+              <button class="memory-btn" id="memorySubtract" aria-label="Memory subtract">M-</button>
+            </div>
+          </div>
+
+          <div class="calc-keypad panel" id="calcKeypad">
+            <!-- keys injected dynamically -->
+          </div>
+        </section>
+
+        <!-- Converter Section -->
+        <section id="converterSection" class="app-section">
+          <div class="converter-panel panel">
+            <h2 class="section-title">UNIT CONVERTER</h2>
+            <div class="converter-category">
+              <label for="categorySelect">CATEGORY</label>
+              <select id="categorySelect" aria-label="Conversion category"></select>
+            </div>
+            <div class="converter-input">
+              <label for="valueInput">VALUE</label>
+              <input type="number" id="valueInput" value="1" step="any">
+            </div>
+            <div class="converter-units">
+              <label for="fromUnit">FROM</label>
+              <select id="fromUnit" aria-label="From unit"></select>
+            </div>
+            <div class="converter-units">
+              <label for="toUnit">TO</label>
+              <select id="toUnit" aria-label="To unit"></select>
+            </div>
+            <div class="converter-result">
+              <span>RESULT</span>
+              <span id="conversionResult">—</span>
+            </div>
+          </div>
+          <div class="currency-panel panel">
+            <h2 class="section-title">CURRENCY</h2>
+            <div id="currencyStatus" class="currency-status">LIVE RATES UNAVAILABLE</div>
+            <div class="currency-fields">
+              <input type="number" id="currencyAmount" value="1" step="any" aria-label="Currency amount">
+              <select id="currencyFrom" aria-label="Currency from">
+                <option value="USD">USD</option><option value="EUR">EUR</option><option value="GBP">GBP</option><option value="JPY">JPY</option><option value="CAD">CAD</option><option value="AUD">AUD</option><option value="NGN">NGN</option>
+              </select>
+              <select id="currencyTo" aria-label="Currency to">
+                <option value="EUR">EUR</option><option value="USD">USD</option><option value="GBP">GBP</option><option value="JPY">JPY</option><option value="CAD">CAD</option><option value="AUD">AUD</option><option value="NGN">NGN</option>
+              </select>
+            </div>
+            <div class="currency-result">
+              <span id="currencyResult">—</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Graph Section -->
+        <section id="graphSection" class="app-section">
+          <div class="graph-panel panel">
+            <h2 class="section-title">GRAPH ENGINE</h2>
+            <div class="graph-input">
+              <label for="graphFunction">y =</label>
+              <input type="text" id="graphFunction" value="x^2" aria-label="Graph function">
+              <button id="plotGraphBtn">PLOT</button>
+              <button id="resetGraphBtn">RESET</button>
+            </div>
+            <div class="graph-canvas-container">
+              <canvas id="graphCanvas" width="600" height="400"></canvas>
+            </div>
+            <div class="graph-message" id="graphMessage"></div>
+            <div class="graph-controls">
+              <button id="zoomInBtn" aria-label="Zoom in">+</button>
+              <button id="zoomOutBtn" aria-label="Zoom out">−</button>
+              <span id="zoomLevelLabel">1.0x</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Formulas Section -->
+        <section id="formulasSection" class="app-section">
+          <div class="formula-list panel" id="formulaList"></div>
+        </section>
+
+        <!-- History Section -->
+        <section id="historySection" class="app-section">
+          <div class="history-panel panel">
+            <div class="history-toolbar">
+              <input type="search" id="historySearch" placeholder="SEARCH HISTORY" aria-label="Search history">
+              <button id="exportHistoryBtn">EXPORT</button>
+              <label for="importHistoryInput" class="import-btn">IMPORT</label>
+              <input type="file" id="importHistoryInput" accept="application/json" hidden>
+              <button id="clearHistoryBtn">CLEAR ALL</button>
+            </div>
+            <div class="history-list" id="historyList"></div>
+          </div>
+        </section>
+
+        <!-- Why I Built It -->
+        <section id="whySection" class="app-section">
+          <article class="why-panel panel">
+            <h1>WHY I BUILT IT</h1>
+            <p>VoltCalc started as a simple calculator I built out of curiosity while I was learning JavaScript.</p>
+            <p>What began as a basic experiment kept growing as I learned more about DOM manipulation, browser storage, responsive design and application architecture.</p>
+            <p>Instead of throwing the original project away, I kept upgrading it as I learned.</p>
+            <p>Today it has grown into a much more complete utility system with scientific calculations, history, conversion, graphing and offline support.</p>
+            <p>It is still something I can improve, and that is part of the point.</p>
+            <p>I want to be able to return to this project later and see how much better I have become.</p>
+            <div class="why-tags">
+              <span>ORIGIN: Curiosity + learning</span>
+              <span>EVOLUTION: Continuous upgrades</span>
+              <span>GOAL: Build better products</span>
+            </div>
+          </article>
+          <div class="roadmap-panel panel">
+            <h2>ROADMAP</h2>
+            <div class="roadmap-col">
+              <h3>COMPLETED</h3>
+              <ul>
+                <li>✓ Basic calculator</li><li>✓ Scientific calculator</li><li>✓ Calculation history</li><li>✓ Memory system</li><li>✓ Unit converter</li><li>✓ Formula library</li><li>✓ Graph engine</li><li>✓ Theme system</li><li>✓ Keyboard support</li><li>✓ PWA foundation</li>
+              </ul>
+            </div>
+            <div class="roadmap-col">
+              <h3>FUTURE</h3>
+              <ul>
+                <li>○ Better expression parser</li><li>○ Automated tests</li><li>○ Currency API</li><li>○ Advanced graph controls</li><li>○ Formula calculators</li><li>○ Import/export complete app data</li><li>○ Accessibility audit</li><li>○ More conversion categories</li><li>○ Cloud synchronization</li><li>○ User accounts</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- Dev Mode -->
+        <section id="devmodeSection" class="app-section">
+          <div class="devmode-panel panel">
+            <h2>VOLT//CALC SYSTEM</h2>
+            <div class="dev-section">
+              <h3>ENGINE</h3>
+              <div><span>Expression Parser</span><span class="dev-status">ONLINE</span></div>
+              <div><span>Storage</span><span class="dev-status">ONLINE</span></div>
+              <div><span>Graph Engine</span><span class="dev-status">ONLINE</span></div>
+              <div><span>Converter</span><span class="dev-status">ONLINE</span></div>
+            </div>
+            <div class="dev-section">
+              <h3>APPLICATION</h3>
+              <div><span>Version</span><span>1.0.0</span></div>
+              <div><span>Build</span><span>2026.08</span></div>
+              <div><span>Offline</span><span id="offlineStatus">READY</span></div>
+              <div><span>Theme</span><span id="themeStatus">DARK</span></div>
+            </div>
+            <div class="dev-section">
+              <h3>PERFORMANCE</h3>
+              <div><span>Load Time</span><span id="loadTimeValue">~0ms</span></div>
+              <div><span>Storage Usage</span><span id="storageUsage">0 KB</span></div>
+              <div><span>Online/Offline</span><span id="onlineStatus">ONLINE</span></div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <aside class="right-panel panel" aria-label="System information and memory">
+        <div class="system-info">
+          <h3>SYSTEM INFO</h3>
+          <div class="sys-row"><span>MEMORY</span><span id="rightMemoryValue">0</span></div>
+          <div class="sys-row"><span>THEME</span><span id="rightThemeValue">DARK</span></div>
+          <div class="sys-row"><span>OFFLINE</span><span id="rightOfflineValue">READY</span></div>
+          <div class="sys-row"><span>STATUS</span><span><span class="status-dot"></span> ONLINE</span></div>
+        </div>
+        <div class="theme-toggles">
+          <button id="themeToggleBtn" class="theme-btn">TOGGLE THEME</button>
+        </div>
+      </aside>
+    </div>
+
+    <footer class="footer">
+      <span>VOLTAGE LORD</span>
+      <span>BUILT WITH HTML · CSS · JAVASCRIPT</span>
+    </footer>
+  </div>
+
+  <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+  <script src="js/app.js" type="module"></script>
+</body>
+              </html>
