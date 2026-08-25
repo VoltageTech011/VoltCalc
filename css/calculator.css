@@ -1,0 +1,35 @@
+/* css/calculator.css */
+.display-panel { margin-bottom: 12px; }
+.display-topline { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.calc-mode-indicator { font-size: 10px; letter-spacing: 2px; color: var(--text-muted); }
+.copy-btn { background: none; border: 1px solid var(--border); color: var(--text-muted); padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 10px; letter-spacing: 1px; transition: all var(--transition); }
+.copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+.expression-display { font-size: 20px; color: var(--text-muted); min-height: 28px; word-break: break-all; font-family: var(--font-mono); }
+.result-display { font-size: 56px; font-weight: 650; line-height: 1.2; word-break: break-all; letter-spacing: -0.5px; transition: color var(--transition); }
+.mode-selector { display: flex; gap: 8px; margin-bottom: 12px; }
+.mode-btn { flex: 1; padding: 10px; background: var(--panel-solid); border: 1px solid var(--border); color: var(--text-muted); border-radius: 6px; cursor: pointer; font-size: 12px; letter-spacing: 1px; }
+.mode-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(217,255,67,0.05); }
+.memory-panel { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+.memory-title { font-size: 10px; letter-spacing: 1px; color: var(--text-muted); }
+.memory-value { font-size: 16px; font-weight: 600; min-width: 80px; text-align: right; }
+.memory-buttons { display: flex; gap: 6px; }
+.memory-btn { background: var(--panel-solid); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 11px; }
+.memory-btn:hover { border-color: var(--accent); }
+.calc-keypad { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.key-btn { padding: 16px 8px; background: var(--panel-solid); border: 1px solid var(--border); color: var(--text); border-radius: 6px; cursor: pointer; font-size: 18px; transition: all var(--transition); text-align: center; }
+.key-btn:hover { border-color: var(--accent); background: rgba(217,255,67,0.03); }
+.key-btn:active { transform: scale(0.96); }
+.key-btn.operator { color: var(--accent); }
+.key-btn.equals { background: var(--accent); color: #111318; font-weight: 700; }
+.key-btn.equals:hover { background: var(--accent-hover); }
+.key-btn.accent { color: var(--accent); }
+.key-btn.danger { color: var(--error); }
+.scientific-keys { display: none; }
+.scientific-mode .scientific-keys { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 8px; }
+.scientific-mode .calc-keypad { grid-template-columns: repeat(4, 1fr); }
+.scientific-mode .key-btn.sci { font-size: 14px; padding: 10px 4px; }
+@media (max-width: 480px) {
+  .result-display { font-size: 36px; }
+  .expression-display { font-size: 16px; }
+  .key-btn { padding: 14px 6px; font-size: 16px; }
+}
