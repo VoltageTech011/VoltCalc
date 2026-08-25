@@ -1,0 +1,18 @@
+/* css/modals.css */
+.why-panel { max-width: 700px; }
+.why-panel h1 { font-size: 28px; letter-spacing: 2px; margin-bottom: 20px; }
+.why-panel p { margin-bottom: 18px; color: var(--text-muted); line-height: 1.7; }
+.why-tags { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 20px; }
+.why-tags span { border: 1px solid var(--border); padding: 8px 12px; border-radius: 6px; font-size: 11px; letter-spacing: 1px; color: var(--accent); }
+.roadmap-panel { margin-top: 20px; }
+.roadmap-panel h2 { margin-bottom: 16px; letter-spacing: 2px; }
+.roadmap-col { margin-bottom: 16px; }
+.roadmap-col h3 { font-size: 11px; color: var(--text-muted); letter-spacing: 1px; }
+.roadmap-col ul { list-style: none; }
+.roadmap-col li { padding: 4px 0; font-size: 14px; }
+.devmode-panel { max-width: 700px; }
+.devmode-panel h2 { margin-bottom: 16px; letter-spacing: 2px; }
+.dev-section { margin-bottom: 20px; }
+.dev-section h3 { font-size: 11px; color: var(--text-muted); letter-spacing: 1px; margin-bottom: 8px; }
+.dev-section div { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+.dev-status { color: var(--accent); }
