@@ -1,0 +1,17 @@
+{
+  "name": "VOLT//CALC",
+  "short_name": "VOLTCALC",
+  "description": "Futuristic all-in-one calculator and utility system.",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#08090C",
+  "theme_color": "#08090C",
+  "icons": [
+    {
+      "src": "assets/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
