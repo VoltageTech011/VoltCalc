@@ -1,0 +1,16 @@
+/* css/history.css */
+.history-panel { display: flex; flex-direction: column; }
+.history-toolbar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+.history-toolbar input { flex: 1; min-width: 120px; background: var(--panel-solid); border: 1px solid var(--border); color: var(--text); padding: 10px; border-radius: 6px; font-size: 12px; }
+.history-toolbar button, .import-btn { background: var(--panel-solid); border: 1px solid var(--border); color: var(--text); padding: 10px 14px; border-radius: 6px; cursor: pointer; font-size: 11px; letter-spacing: 1px; }
+.history-toolbar button:hover, .import-btn:hover { border-color: var(--accent); }
+.import-btn { cursor: pointer; display: inline-block; }
+.history-list { display: flex; flex-direction: column; gap: 8px; max-height: 600px; overflow-y: auto; }
+.history-item { background: var(--panel-solid); border: 1px solid var(--border); border-radius: 6px; padding: 12px; display: flex; justify-content: space-between; align-items: center; transition: border-color var(--transition); }
+.history-item:hover { border-color: var(--accent); }
+.history-expr { font-size: 14px; font-weight: 500; }
+.history-result { font-size: 16px; font-weight: 600; color: var(--accent); }
+.history-time { font-size: 11px; color: var(--text-muted); }
+.history-actions { display: flex; gap: 8px; }
+.history-delete { background: none; border: none; color: var(--error); cursor: pointer; font-size: 16px; }
+.empty-state { text-align: center; padding: 40px; color: var(--text-muted); letter-spacing: 2px; }
